@@ -1,0 +1,110 @@
+#include<stdio.h>
+#include<stdlib.h>
+#define LINE_MAX 1024
+
+typedef struct node{
+    int no;
+    float arrival_time,burst_time,process_completed,turnarround_time,waiting_time,response_time,relative_delay;
+    struct node *next;
+}NODE;
+
+void create_insert(NODE **p, int no,float burst_time,float arrival_time,float *fr){
+    NODE *q,*r = *p;
+    q = (NODE*)malloc(sizeof(NODE));
+    q->no = no;
+    q->burst_time = burst_time;
+    q->arrival_time = arrival_time;
+    q->response_time = *fr - arrival_time;
+    q->process_completed = *fr + burst_time;
+    q->turnarround_time = q->process_completed - arrival_time;
+    q->waiting_time = q->turnarround_time - burst_time;
+    q->relative_delay = q->turnarround_time / burst_time;
+    *fr = *fr + burst_time; 
+
+    q->next = NULL;
+    if(*p == NULL)
+        *p = q;
+    else{
+        while(r->next != NULL)
+            r = r->next;
+        r->next = q;
+    }
+}
+
+void display(NODE *p,int process){
+    float total_waitingtime;
+     total_waitingtime = 0;
+     printf("Scheduling Method: First Come First Served\n");
+    printf("Process Waiting Times:\n");
+    while(p!=NULL){
+        printf("p%d:%.2f ms\n",p->no,p->waiting_time);
+        total_waitingtime =total_waitingtime + p->waiting_time;
+        p = p->next;
+    }
+
+    printf("Average Waiting Time: %.2f ms\n",total_waitingtime/process);
+}
+			
+
+void FCFS()
+{
+NODE *head = NULL;
+    int process=0,i;
+    float first_response;
+    
+    	FILE *fp;
+	char line[LINE_MAX];
+	float num[3];
+    
+    if ((fp = fopen("input.txt", "r")) == NULL)
+        return;
+	while (fgets(line, LINE_MAX, fp) != NULL) {
+
+        sscanf(line,"%f:%f\n",&num[0],&num[1]);
+   	 i++;
+    
+        create_insert(&head,i,num[0],num[1],&first_response);
+        
+}
+pclose(fp);
+    display(head,i);
+    }
+
+void SchedMethod(){
+	int i;
+	
+		printf("1)First Come, First Served Scheduling\n");
+		printf("2)Shortest-Job-First Scheduling\n");
+		printf("3)Priority Scheduling\n");
+		printf("4)Round-Robin  Scheduling\n");
+		scanf("%d",&i);
+		switch(i){
+			case 1: 
+				FCFS();
+				break;
+			
+			}
+}
+int main()
+{	
+	int   n;
+	printf("\t CPU Scheduler Simulator \n");
+	printf("1) Scheduling Method\n");
+	printf("2) Preemptive Mode\n");
+	printf("3) Non-preemptive Mode\n");
+	printf("4) Show Result\n");
+	printf("5)End Program\n");
+	printf("Option >\n");
+	scanf("%d",&n);
+	switch(n){
+		case 1:
+			SchedMethod();
+			break;
+
+	
+		default: printf("error");
+	}
+	
+	return 0;
+	
+	}
