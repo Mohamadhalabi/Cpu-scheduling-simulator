@@ -49,7 +49,7 @@ void display(NODE *p,int process){
 void FCFS()
 {
 NODE *head = NULL;
-    int process=0,i;
+    int i=0;
     float first_response;
     
     	FILE *fp;
