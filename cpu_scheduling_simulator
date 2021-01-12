@@ -1,110 +1,278 @@
-#include<stdio.h>
-#include<stdlib.h>
+#include <stdio.h>
+#include <getopt.h>
+#include <stdlib.h>
 #define LINE_MAX 1024
 
-typedef struct node{
-    int no;
-    float arrival_time,burst_time,process_completed,turnarround_time,waiting_time,response_time,relative_delay;
-    struct node *next;
-}NODE;
+int preemptive=0;
 
-void create_insert(NODE **p, int no,float burst_time,float arrival_time,float *fr){
-    NODE *q,*r = *p;
-    q = (NODE*)malloc(sizeof(NODE));
-    q->no = no;
-    q->burst_time = burst_time;
-    q->arrival_time = arrival_time;
-    q->response_time = *fr - arrival_time;
-    q->process_completed = *fr + burst_time;
-    q->turnarround_time = q->process_completed - arrival_time;
-    q->waiting_time = q->turnarround_time - burst_time;
-    q->relative_delay = q->turnarround_time / burst_time;
-    *fr = *fr + burst_time; 
-
-    q->next = NULL;
-    if(*p == NULL)
-        *p = q;
-    else{
-        while(r->next != NULL)
-            r = r->next;
-        r->next = q;
-    }
-}
-
-void display(NODE *p,int process){
-    float total_waitingtime;
-     total_waitingtime = 0;
-     printf("Scheduling Method: First Come First Served\n");
-    printf("Process Waiting Times:\n");
-    while(p!=NULL){
-        printf("p%d:%.2f ms\n",p->no,p->waiting_time);
-        total_waitingtime =total_waitingtime + p->waiting_time;
-        p = p->next;
-    }
-
-    printf("Average Waiting Time: %.2f ms\n",total_waitingtime/process);
-}
-			
-
-void FCFS()
+struct node
 {
-NODE *head = NULL;
-    int i=0;
-    float first_response;
-    
-    	FILE *fp;
-	char line[LINE_MAX];
-	float num[3];
-    
-    if ((fp = fopen("input.txt", "r")) == NULL)
-        return;
-	while (fgets(line, LINE_MAX, fp) != NULL) {
+    int burstTime, arrivalTime, priority, pc;
+    struct node *next;
 
-        sscanf(line,"%f:%f\n",&num[0],&num[1]);
-   	 i++;
-    
-        create_insert(&head,i,num[0],num[1],&first_response);
-        
+};
+struct node *head;
+
+struct node *createNode_insert(int burst_Time,int arrival_Time,int priority,int p){
+	struct node * temp;
+	temp=(struct node *) malloc (sizeof (struct node));
+	temp->burstTime=burst_Time;
+	temp->arrivalTime=arrival_Time;
+	temp->priority=priority;
+	temp->pc=p;
+	temp->next= NULL;
+return temp;
+	
 }
-pclose(fp);
-    display(head,i);
+struct node *insertBack(struct node *head, int burstTime, int arrivalTime, int priority, int row)
+{
+    struct node *temp = createNode_insert(burstTime, arrivalTime, priority, row);
+    struct node *data;
+    if (head == NULL)
+    {
+        head = temp;
+        return head;
     }
-
-void SchedMethod(){
-	int i;
-	
-		printf("1)First Come, First Served Scheduling\n");
-		printf("2)Shortest-Job-First Scheduling\n");
-		printf("3)Priority Scheduling\n");
-		printf("4)Round-Robin  Scheduling\n");
-		scanf("%d",&i);
-		switch(i){
-			case 1: 
-				FCFS();
-				break;
-			
-			}
+    data = head;
+    while (data->next != NULL)
+        data = data->next;
+    data->next = temp;
+    return head;
 }
-int main()
-{	
-	int   n;
-	printf("\t CPU Scheduler Simulator \n");
-	printf("1) Scheduling Method\n");
-	printf("2) Preemptive Mode\n");
-	printf("3) Non-preemptive Mode\n");
-	printf("4) Show Result\n");
-	printf("5)End Program\n");
-	printf("Option >\n");
-	scanf("%d",&n);
-	switch(n){
-		case 1:
-			SchedMethod();
-			break;
 
+struct node  *readFile (void);
+void simulation(void);
+void scheduling(void);
+void sortArrivals(struct node * head);
+void swap(struct node *z,struct node *y);
+void sortjob(struct node *head); 
+int countNodes(struct node *head);
+void FCFS(void);
+void SJFSNP(void);
+
+int main(int argc,char **argv){                                       
 	
-		default: printf("error");
+ readFile();	
+ simulation();
+
+return 0;
+}
+
+
+struct node *readFile(){
+	
+	FILE *fp;
+char line[LINE_MAX];
+ int num[3];
+int processcount;
+
+	if ((fp = fopen("input.txt", "r")) == NULL){
+	printf("error opening the input file \n");
+        return 0;
+        }
+	while (fgets(line, LINE_MAX, fp) != NULL) {
+	processcount++;
+        sscanf(line,"%d:%d:%d\n",&num[0],&num[1],&num[2]);
+       head= insertBack(head,num[0],num[1],num[2],processcount);     
+}
+
+	fclose(fp);
+
+    return head;
+}
+void simulation(void){
+	int choise;
+	printf(" CPU scheduler simulator \n");
+	printf("\n 1) secheduling method.");
+	printf("\n 2) preemptive moode.");
+	printf("\n 3) Non-preemptive mode.");
+	printf("\n 4) show results for all methods.");
+	printf("\n 5) End the program.");
+   	printf("\n please enter your choise:");
+
+	scanf("%d", &choise);
+
+
+	if(choise==1){
+	scheduling();
+	}
+	else if(choise==2){
+	preemptive=1;
+	simulation();
+	}
+	else if (choise==3){
+	preemptive=0;
+	simulation();
+	}
+	else if (choise==4){
+	if(preemptive==0){	
+ 	SJFSNP();
+ 	FCFS();                    
+	}
+ 
+ 	else if(preemptive==1){
+ 	FCFS();  	
+ 	}
+	}
+	else if (choise==5){
+		printf("closing the program ....");
+		exit (1);
+		 	}
+		else{
+	printf("invalid input \n");
+	simulation();
+	}	
+
+}
+
+void scheduling(void){
+	int choise;
+	printf("\nscheduling Methods\n");
+	printf("\n 1) First-come,first-served.");
+   	printf("\n 2) Shortest-Job-first scheduling.");
+ 
+	scanf("%d",&choise);
+	if(choise==1){
+	
+		FCFS();
+
+	}
+	else if(choise==2){
+		if(preemptive==0)
+	SJFSNP();		
+}
+}
+
+void FCFS(void){                                           
+	printf("FIRST COME FIRST SERVED \n Process waiting Time:");
+	
+        int waitingTime=0,count=0,total_WaitingTime=0,pc=0;
+        double averageWaiting=0;
+        struct node *temp=head;
+
+      while(temp!=NULL){ 
+	    sortArrivals(head);
+		temp=temp->next;}
+	    
+	    temp=head;
+	    
+	    while(temp!=NULL){
+	    	count++;
+	    	waitingTime=waitingTime-temp->arrivalTime;
+	    	pc=temp->pc;
+		   	printf("\n p%d=%d ms",pc,waitingTime);
+         	total_WaitingTime=total_WaitingTime+waitingTime;
+		   	waitingTime=waitingTime+temp->burstTime+temp->arrivalTime;
+		   	
+      	temp=temp->next; 
+      	 }
+
+			 averageWaiting=total_WaitingTime/count;
+			printf("\n The Average Waiting Time = %.2f ms",averageWaiting);	   
+	 simulation();	
+	 }	
+	
+	void sortArrivals(struct node *head){
+    struct node *tempdata = head;
+   
+       
+        while (tempdata->next != NULL)
+        {
+            if (tempdata->arrivalTime > tempdata->next->arrivalTime)
+            {
+                swap(tempdata, tempdata->next);
+                
+            }
+           tempdata = tempdata->next;
+        }
+        head = tempdata;      	 
+		
 	}
 	
-	return 0;
+	void swap(struct node *i, struct node *j){
 	
+
+	int temp_burstTime = x->burstTime;
+    	i->burstTime = j->burstTime;
+    	j->burstTime = temp_burstTime;
+
+    int temp_arrivalTime = i->arrivalTime;
+    i->arrivalTime = j->arrivalTime;
+    j->arrivalTime = temp_arrivalTime;
+
+    int temp_priority = i->priority;
+    i->priority = j->priority;
+    j->priority = temp_priority;
+
+    int temp_pc = i->pc;
+    i->pc = j->pc;
+    j->pc = temp_pc;
+}
+
+
+void SJFSNP(void){
+	printf(" Shortest-job, first-served Non-preemptive\n processes waiting time:");
+	struct node *temp=head;
+	struct node *tempy=temp;
+    int counter=countNodes(temp);
+    int n=0,i=0,j=0,burst[counter],arrival[counter],pc[counter], waiting=0,tempburst=0,totalWaiting=0;
+    
+    while(temp!=NULL){
+    sortjob(tempy);
+    temp=temp->next; 
+		}
+		
+		temp=tempy;
+    for(n;n<counter;n++){
+    burst[n]=temp->burstTime;
+	arrival[n]=temp->arrivalTime;
+	pc[n]=temp->pc;
+	temp=temp->next;
+    		}
+ for(i;i<counter;i++){
+for(j=0;j<counter;j++){
+	if(waiting-arrival[j] >= 0 && burst[j] != 0){
+		waiting=waiting-arrival[j];
+		totalWaiting=totalWaiting+waiting;
+		
+		printf("\n p%d = %d ms",pc[j],waiting);
+
+		waiting=waiting+burst[j]+arrival[j];
+		burst[j]=0;
 	}
+}	
+ }
+double averagewaiting=totalWaiting/(float)counter;
+ printf("\n Average Waiting Time = %.2f ms",averagewaiting);
+
+ 
+ simulation();
+       }
+
+void sortjob(struct node *head){
+	
+	 struct node *temp = head;
+   
+       
+        while (temp->next != NULL)
+        {
+            if (temp->burstTime > temp->next->burstTime)
+            {
+                swap(temp, temp->next);
+                
+            }
+           temp = temp->next;
+        }
+        head = temp;    
+  
+}
+
+int countNodes(struct node *head){
+	int counter=0;
+	struct node *temp=head;
+	while(temp!=NULL){
+		counter++;
+		temp=temp->next;
+	}
+	return counter;
+}
