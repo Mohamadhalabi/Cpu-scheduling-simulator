@@ -192,7 +192,7 @@ void FCFS(void){
 	void swap(struct node *i, struct node *j){
 	
 
-	int temp_burstTime = x->burstTime;
+	int temp_burstTime = i->burstTime;
     	i->burstTime = j->burstTime;
     	j->burstTime = temp_burstTime;
 
