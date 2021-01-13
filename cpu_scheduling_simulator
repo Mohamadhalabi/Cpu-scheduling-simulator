@@ -48,6 +48,9 @@ int Nodes_count(struct node *head);
 void FCFS(void);
 void SJFSNP(void);
 void SJFSP(void);
+void RR(void);
+
+
 int main(int argc,char **argv){                                       
 	
  readFile();	
@@ -103,13 +106,17 @@ void simulation(void){
 	simulation();
 	}
 	else if (choise==4){
-	if(prem==0){	
+	if(prem==0){
+	RR();	              	
  	SJFSNP();
- 	FCFS();                    
+ 	FCFS();
+
 	}
  
  	else if(prem==1){
- 	FCFS();  	
+ 	RR();
+ 	FCFS(); 
+ 	SJFSP(); 	
  	}
 	}
 	else if (choise==5){
@@ -128,7 +135,7 @@ void scheduling(void){
 	printf("\nscheduling Methods\n");
 	printf("\n 1) First-come,first-served.");
    	printf("\n 2) Shortest-Job-first scheduling.");
- 
+    	printf("\n 3) Round-Robin scheduling.");
 	scanf("%d",&choise);
 	if(choise==1){
 	
@@ -139,6 +146,10 @@ void scheduling(void){
 	SJFSNP();
 	else if (prem==1){
 		SJFSP();
+	}
+	else if(choise==3)
+	{
+	RR();
 	}	
 }
 }
@@ -283,7 +294,7 @@ void SJFSP(void){
 	struct node *temp=head;
 	struct node *tmp=temp;
     int counter=Nodes_count(temp);
-    int n=0,i=0 , j=0,burst[counter],arrival[counter],pc[counter], waiting[counter],tmpburst=0,totalWaiting=0,wait=0,m=0,totalBurst=0,count[counter],a=0;
+    int n=0,i=0 , j=0,burst[counter],arrival[counter],pc[counter], waiting[counter],tmpburst=0,total_Waiting=0,wait=0,m=0,totalBurst=0,count[counter],a=0;
     
     while(temp!=NULL){
     Job_sort(tmp);
@@ -341,15 +352,80 @@ for(i;i<totalBurst;i++){
 			wait++; 
 		   j=counter-1;	}		
 	
-			   }
+	
+		 }
 	}
 for(j=0;j<counter;j++){
  	waiting[j]=waiting[j]-arrival[j];
  	printf("\np%d = %d ms",pc[j],waiting[j]);
-	 totalWaiting=totalWaiting+waiting[j] ;
+	 total_Waiting=total_Waiting+waiting[j] ;
 	 }
-double averagewaiting_Time=totalWaiting/(float)counter;
+double averagewaiting_Time=total_Waiting/(float)counter;
  printf("\n Average Waiting Time = %.2f ms",averagewaiting_Time);
  
  simulation();
 }
+
+
+void RR(void){
+	int quant;
+	
+	printf("RR quantum Time:");
+	scanf("%d",&quant);
+	
+	struct node *temp=head;
+	struct node *tmp=temp;
+    int counter=Nodes_count(temp);
+    int n=0,i=0,j=0,burst[counter],arrival[counter],pc[counter], waiting[counter],total_Waiting=0,m=0,wait=0,count[counter];
+    
+    while(temp!=NULL){
+    Arrival_sort(tmp);
+    temp=temp->next;
+		}
+	
+		temp=tmp;
+    for(n;n<counter;n++){
+    burst[n]=temp->burst_Time;
+	arrival[n]=temp->arrival_Time;
+	pc[n]=temp->pc;
+	temp=temp->next;
+    		}
+
+    for(m=0;m<counter;m++){
+    	waiting[m]=0;
+    	count[m]=0;
+	}
+		
+ for(i;i<counter;i++){
+
+for(j=0;j<counter;j++){
+
+	if(wait-arrival[j] >= 0 && burst[j] != 0){
+		
+		if(burst[j]<quant){
+        	waiting[j]=wait-(quant*count[j]);
+			wait=wait+burst[j];
+        	burst[j]=burst[j]-burst[j];
+				}
+		else{
+	waiting[j]=wait-(quant*count[j]);
+	burst[j]=burst[j]-quant;
+    wait=wait+quant;
+    count[j]++;
+    	}
+	}
+}	
+ }
+ for(j=0;j<counter;j++){
+ 	waiting[j]=waiting[j]-arrival[j];
+ 	printf("\np%d = %d ms",pc[j],waiting[j]);
+
+	 total_Waiting=total_Waiting+waiting[j] ;
+	 }
+double averagewaiting_Time=total_Waiting/(float)counter;
+ printf("\n Average Waiting Time = %.2f ms",averagewaiting_Time);
+
+  simulation();
+}
+
+
