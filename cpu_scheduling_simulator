@@ -1,30 +1,31 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <getopt.h>
 #define LINE_MAX 1024
 
 int prem=0;
 struct node
 {
     int burst_Time, arrival_Time, priority, pc;
-    struct node *next;
+    struct node *after;
 
 };
 struct node *head;
 
-struct node *createNode_insert(int burst_Time,int arrival_Time,int priority,int p){
+struct node *create_insert(int burst_Time,int arrival_Time,int priority,int p){
 	struct node * tmp;
 	tmp=(struct node *) malloc (sizeof (struct node));
 	tmp->burst_Time=burst_Time;
 	tmp->arrival_Time=arrival_Time;
 	tmp->priority=priority;
 	tmp->pc=p;
-	tmp->next= NULL;
-return tmp;
+	tmp->after= NULL;
+	return tmp;
 	
 }
 struct node *Back(struct node *head, int burstTime, int arrivalTime, int priority, int cn)
 {
-    struct node *tmp = createNode_insert(burstTime, arrivalTime, priority, cn);
+    struct node *tmp = create_insert(burstTime, arrivalTime, priority, cn);
     struct node *data;
     if (head == NULL)
     {
@@ -32,39 +33,50 @@ struct node *Back(struct node *head, int burstTime, int arrivalTime, int priorit
         return head;
     }
     data = head;
-    while (data->next != NULL)
-        data = data->next;
-    data->next = tmp;
+    while (data->after != NULL)
+    data = data->after;
+    data->after = tmp;
     return head;
 }
 
-struct node  *readFile (void);
-void simulation(void);
-void scheduling(void);
-void Arrival_sort(struct node * head);
-void swap(struct node *,struct node *);
-void Job_sort(struct node *head); 
-int Nodes_count(struct node *head);
-void FCFS(void);
-void SJFSNP(void);
-void SJFSP(void);
-void RR(void);
+struct node *readFile ();
+void sim();
+void scheduling();
+void Arrival_sort();
+void swap();
+void Job_sort(); 
+void FCFS();
+void SJFSNP();
+void SJFSP();
+void RR();
+void PRIORITYPREM();
+void PRIORITYNP();
+void Priority_sort();
+int Nodes_count();
+char *inp,*outp,arg;
+
+int main(int argc,char **argv){ 
 
 
-int main(int argc,char **argv){                                       
+	while((arg=getopt(argc,argv,"f:o:")) !=-1){
+			
+	if(arg=='f'){
+		inp=optarg;
+	}
+	else if(arg=='o'){
+		outp=optarg;
+}	}                                      
 	
  readFile();	
- simulation();
+ sim();
 
 return 0;
 }
 
-
 struct node *readFile(){
-	
 	FILE *fp;
 char line[LINE_MAX];
- int num[3];
+unsigned int num[3];
 int processcount;
 
 	if ((fp = fopen("input.txt", "r")) == NULL){
@@ -81,144 +93,173 @@ int processcount;
 
     return head;
 }
-void simulation(void){
-	int choise;
-	printf(" CPU scheduler simulator \n");
-	printf("\n 1) secheduling method.");
-	printf("\n 2) preemptive moode.");
-	printf("\n 3) Non-preemptive mode.");
-	printf("\n 4) show results for all methods.");
-	printf("\n 5) End the program.");
-   	printf("\n please enter your choise:");
+void sim(void){
+	int choice;
+	printf("CPU scheduler simulator \n");
+	printf("1)secheduling method\n");
+	printf("2)preemptive moode\n");
+	printf("3)Non-preemptive mode\n");
+	printf("4)show results for all methods\n");
+	printf("5)End the program\n");
+   	printf("please enter your choise:\n");
 
-	scanf("%d", &choise);
+	scanf("%d", &choice);
 
 
-	if(choise==1){
+	if(choice==1){
 	scheduling();
 	}
-	else if(choise==2){
+	
+	else if(choice==2){
 	prem=1;
-	simulation();
+	sim();
 	}
-	else if (choise==3){
+	
+	else if (choice==3){
 	prem=0;
-	simulation();
+	sim();
 	}
-	else if (choise==4){
+	
+	else if (choice==4){
 	if(prem==0){
 	RR();	              	
  	SJFSNP();
  	FCFS();
-
+ 	PRIORITYNP();
 	}
- 
+	
  	else if(prem==1){
  	RR();
  	FCFS(); 
- 	SJFSP(); 	
+ 	SJFSP();
+ 	PRIORITYPREM(); 	
  	}
+ 	
 	}
-	else if (choise==5){
-		printf("closing the program ....");
+	else if (choice==5){
+		printf("closing the program");
 		exit (1);
 		 	}
-		else{
-	printf("invalid input \n");
-	simulation();
+	else{
+	printf("wrong input\n");
+	sim();
 	}	
 
 }
 
 void scheduling(void){
-	int choise;
-	printf("\nscheduling Methods\n");
-	printf("\n 1) First-come,first-served.");
-   	printf("\n 2) Shortest-Job-first scheduling.");
-    	printf("\n 3) Round-Robin scheduling.");
-	scanf("%d",&choise);
-	if(choise==1){
+	int choice;
+	printf("scheduling Methods\n");
+	printf("1)First-come,first-served\n");
+   	printf("2)Shortest-Job-first scheduling\n");
+    	printf("3)Round-Robin scheduling\n");
+    	printf("4)Priority scheduling\n");
+	scanf("%d",&choice);
 	
-		FCFS();
+	if(choice==1){
+	FCFS();
 	}
-	else if(choise==2){
-		if(prem==0)
+	
+	else if(choice==2){
+	if(prem==0)
+	
 	SJFSNP();
 	else if (prem==1){
 		SJFSP();
 	}
-	else if(choise==3)
-	{
-	RR();
-	}	
-}
-}
-
-void FCFS(void){                                           
-	printf("FIRST COME FIRST SERVED \n Process waiting Time:");
-	
-        int waitingTime=0,count=0,total_WaitingTime=0,pc=0;
-        double averageWaiting=0;
-        struct node *tmp=head;
-
-      while(tmp!=NULL){ 
-	    Arrival_sort(head);
-		tmp=tmp->next;}
-	    
-	    tmp=head;
-	    
-	    while(tmp!=NULL){
-	    	count++;
-	    	waitingTime=waitingTime-tmp->arrival_Time;
-	    	pc=tmp->pc;
-		   	printf("\n p%d=%d ms",pc,waitingTime);
-         	total_WaitingTime=total_WaitingTime+waitingTime;
-		   	waitingTime=waitingTime+tmp->burst_Time+tmp->arrival_Time;
-		   	
-      	tmp=tmp->next; 
-      	 }
-
-			 averageWaiting=total_WaitingTime/count;
-			printf("\n The Average Waiting Time = %.2f ms",averageWaiting);	   
-	 simulation();	
-	 }	
-	
-	void Arrival_sort(struct node *head){
-    struct node *tempdata = head;
-   
-       
-        while (tempdata->next != NULL)
-        {
-            if (tempdata->arrival_Time > tempdata->next->arrival_Time)
-            {
-                swap(tempdata, tempdata->next);
-                
-            }
-           tempdata = tempdata->next;
-        }
-        head = tempdata;      	 
-		
 	}
 	
-	void swap(struct node *i, struct node *j){
+	else if(choice==3)
+	{
+	RR();
+	}
 	
+	else if(choice==4)
+	{
+	if(prem==0)
+	PRIORITYNP();	
+	
+	else if(prem==1){
+	 PRIORITYPREM(); 	
+	}
+	}
+	}
+	
+void swap(struct node *i, struct node *j){
+	
+int tempBurstTime,tempArrivalTime,temp_priority,temp_pc;
 
-	int temp_burstTime = i->burst_Time;
-    	i->burst_Time = j->burst_Time;
-    	j->burst_Time = temp_burstTime;
-
-    int temp_arrivalTime = i->arrival_Time;
-    i->arrival_Time = j->arrival_Time;
-    j->arrival_Time = temp_arrivalTime;
-
-    int temp_priority = i->priority;
-    i->priority = j->priority;
-    j->priority = temp_priority;
-
-    int temp_pc = i->pc;
-    i->pc = j->pc;
-    j->pc = temp_pc;
+	 tempBurstTime = i->burst_Time;
+	 i->burst_Time = j->burst_Time;
+	 j->burst_Time = tempBurstTime;
+	 tempArrivalTime = i->arrival_Time;
+	 i->arrival_Time = j->arrival_Time;
+	 j->arrival_Time = tempArrivalTime;
+	 temp_priority = i->priority;
+	 i->priority = j->priority;
+	 j->priority = temp_priority;
+	 temp_pc = i->pc;
+	  i->pc = j->pc;
+	 j->pc = temp_pc;
 }
+
+void Arrival_sort(struct node *head){
+	struct node *tmp = head;   
+        while (tmp->after != NULL)
+        {
+            if (tmp->arrival_Time > tmp->after->arrival_Time)
+            {
+                swap(tmp, tmp->after);       
+            }
+           tmp = tmp->after;
+        }
+        head = tmp;      	 
+	}
+	
+void Job_sort(struct node *head){
+	
+	 struct node *temp = head;	
+         while (temp->after != NULL)
+        {
+            if (temp->burst_Time > temp->after->burst_Time)
+            {
+                swap(temp,temp->after);
+                
+            }
+       temp = temp->after;
+        }
+        head = temp;    
+}	
+	
+void FCFS(void){    
+	FILE *out; 
+	 out=fopen(outp,"output.txt");                                      
+	printf("first come first served \n Process waiting Time:");
+	fprintf(out,"\nfirst come first served \n Process waiting Time:");
+        int waitingTime=0,counter=0,total_WaitingTime=0,pc=0;
+        double averagewaiting_time=0;
+        struct node *tmp=head;
+
+        while(tmp!=NULL){ 
+	Arrival_sort(head);
+	tmp=tmp->after;} 
+	tmp=head;
+	    
+	while(tmp!=NULL){
+	counter++;
+	waitingTime=waitingTime-tmp->arrival_Time;
+	pc=tmp->pc;
+	printf("\n p%d = %d ms",pc,waitingTime);
+      	total_WaitingTime=total_WaitingTime+waitingTime;
+      	waitingTime=waitingTime+tmp->burst_Time+tmp->arrival_Time;
+      	tmp=tmp->after; 
+      	 }	
+      	averagewaiting_time=total_WaitingTime/counter;
+	printf("\n average waiting Time = %.2f ms",averagewaiting_time);
+	fprintf(out,"\n The Average Waiting Time = %0.2f ms.",averagewaiting_time);
+	fclose(out);	   	   
+	sim();	
+	 }	
 
 
 void SJFSNP(void){
@@ -226,79 +267,62 @@ void SJFSNP(void){
 	struct node *temp=head;
 	struct node *tmp=temp;
     int counter=Nodes_count(temp);
-    int n=0,i=0,j=0,burst[counter],arrival[counter],pc[counter], waiting=0,tmpburst=0,totalWaiting=0;
+    
+    int n=0,j=0,arriv[counter],burst[counter],pc[counter], w=0,tmpburst=0,totalWait=0;
     
     while(temp!=NULL){
     Job_sort(tmp);
-    temp=temp->next; 
+    temp=temp->after; 
 		}
 		
 		temp=tmp;
     for(n;n<counter;n++){
     burst[n]=temp->burst_Time;
-	arrival[n]=temp->arrival_Time;
+	arriv[n]=temp->arrival_Time;
 	pc[n]=temp->pc;
-	temp=temp->next;
+	temp=temp->after;
     		}
- for(i;i<counter;i++){
-for(j=0;j<counter;j++){
-	if(waiting-arrival[j] >= 0 && burst[j] != 0){
-		waiting=waiting-arrival[j];
-		totalWaiting=totalWaiting+waiting;
+ 	for(int i=0; i<counter; i++){
+	for(j=0 ;j<counter;j++){
+	if(w - arriv[j] >= 0 && burst[j] != 0){
+		w=w - arriv[j];
+		totalWait=totalWait+w;
 		
-		printf("\n p%d = %d ms",pc[j],waiting);
+		printf("\n p%d = %d ms",pc[j],w);
 
-		waiting=waiting+burst[j]+arrival[j];
+		w=w + burst[j] + arriv[j];
 		burst[j]=0;
-	}
-}	
- }
-double averagewaiting_Time=totalWaiting/(float)counter;
- printf("\n Average Waiting Time = %.2f ms",averagewaiting_Time);
-
- 
- simulation();
-       }
-
-void Job_sort(struct node *head){
-	
-	 struct node *temp = head;
-   
-       
-        while (temp->next != NULL)
-        {
-            if (temp->burst_Time > temp->next->burst_Time)
-            {
-                swap(temp, temp->next);
-                
-            }
-           temp = temp->next;
-        }
-        head = temp;    
-  
+		}	
+	}	
 }
+
+double Avgwait=totalWait/(float)counter;
+ printf("\n Average Waiting Time = %.2f ms",Avgwait);
+
+ sim();
+}
+
 
 int Nodes_count(struct node *head){
 	int counter=0;
 	struct node *temp=head;
 	while(temp!=NULL){
 		counter++;
-		temp=temp->next;
+		temp=temp->after;
 	}
 	return counter;
 }
-
 
 void SJFSP(void){
 	printf("Shortest-job, first-served preemptive\n processes waiting time:");	
 	struct node *temp=head;
 	struct node *tmp=temp;
     int counter=Nodes_count(temp);
-    int n=0,i=0 , j=0,burst[counter],arrival[counter],pc[counter], waiting[counter],tmpburst=0,total_Waiting=0,wait=0,m=0,totalBurst=0,count[counter],a=0;
+    int n=0,j=0,burst[counter],arriv[counter],pc[counter], waiting[counter],tmpburst=0,total_Waiting=0,w=0,m=0,totalburst=0,count[counter];
     
     while(temp!=NULL){
     Job_sort(tmp);
-    temp=temp->next;
+    temp=temp->after;
 		}
 		
 		 for(m=0;m<counter;m++){
@@ -308,16 +332,172 @@ void SJFSP(void){
 		temp=tmp;
     for(n;n<counter;n++){
     burst[n]=temp->burst_Time;
-	arrival[n]=temp->arrival_Time;
+	arriv[n]=temp->arrival_Time;
 	pc[n]=temp->pc;
-	temp=temp->next;
+	temp=temp->after;
     		}
     		
     		for(n=0;n<counter;n++){
-    			totalBurst=totalBurst+burst[n];
+    			totalburst=totalburst+burst[n];
 			}
     		
-for(i;i<totalBurst;i++){	
+for(int i =0;i<totalburst;i++){	
+
+  for(j=0;j<counter;j++){
+  	 
+	if(w-arriv[j] >= 0 && burst[j] != 0 ){
+		
+		for(m=0;m<counter;m++){
+			for(n=m+1;n<counter;n++){
+		if(burst[m] == burst[n] && arriv[m]>arriv[n]){
+	int a=burst[m];
+	burst[m]=burst[n];
+	burst[n]=a;
+	
+	a=arriv[m];
+	arriv[m]=arriv[n];
+	arriv[n]=a;
+	a=pc[m];
+	pc[m]=pc[n];
+	pc[n]=a;
+	a=count[m];
+	count[m]=count[n];
+	count[n]=a;
+	a=waiting[m];
+	waiting[m]=waiting[n];
+	waiting[n]=a;
+		}}}
+	waiting[j]=w-count[j];
+	burst[j]--;
+	count[j]++;
+	w++; 
+	  j=counter-1;	
+	  }		
+		 }
+	}
+for(j=0;j<counter;j++){
+ 	waiting[j]=waiting[j]-arriv[j];
+ 	printf("\np%d = %d ms",pc[j],waiting[j]);
+	 total_Waiting=total_Waiting+waiting[j] ;
+	 }
+double averagewaiting_Time=total_Waiting/(float)counter;
+ printf("\n average Waiting Time = %.2f ms",averagewaiting_Time);
+ 
+ sim();
+}
+
+void RR(void)
+{
+	int quant;
+	printf("RR quantum Time:");
+	scanf("%d",&quant);
+	
+	struct node *temp=head;
+	struct node *tmp=temp;
+	int counter;
+    counter=Nodes_count(temp);
+    int n=0,j=0,burst[counter],arriv[counter],pc[counter], waiting[counter],total_Waiting=0,w=0,count[counter];
+    
+    while(temp!=NULL){
+    Arrival_sort(tmp);
+    temp=temp->after;
+		}
+    temp=tmp;
+    for(n;n<counter;n++){
+    burst[n]=temp->burst_Time;
+    arriv[n]=temp->arrival_Time;
+    pc[n]=temp->pc;
+    temp=temp->after;
+    		}
+    for(int m=0;m<counter;m++){
+    waiting[m]=0;
+    count[m]=0;
+}
+		
+ for(int i=0 ;i<counter; i++){
+
+for(j=0 ;j<counter; j++){
+
+	if(w-arriv[j] >= 0 && burst[j] != 0){
+		
+		if(burst[j]<quant){
+        	waiting[j]=w-(quant*count[j]);
+			w=w+burst[j];
+        	burst[j]=burst[j]-burst[j];
+				}
+		else{
+	waiting[j]=w-(quant*count[j]);
+	burst[j]=burst[j]-quant;
+    w=w+quant;
+    count[j]++;
+    	}
+	}
+}	
+ }
+ for(j=0;j<counter;j++){
+ 	waiting[j]=waiting[j]-arriv[j];
+ 	printf("\np%d = %d ms",pc[j],waiting[j]);
+
+	 total_Waiting=total_Waiting+waiting[j] ;
+	 }
+double averagewaiting_Time=total_Waiting/(float)counter;
+ printf("\n Average Waiting Time = %.2f ms",averagewaiting_Time);
+
+  sim();
+}
+
+
+
+void Priority_sort(struct node *head){
+	
+	 struct node *tempdata = head;
+   
+       
+        while (tempdata->after != NULL)
+        {
+            if (tempdata->priority > tempdata->after->priority)
+            {
+                swap(tempdata, tempdata->after);
+                
+            }
+           tempdata = tempdata->after;
+        }
+        head = tempdata;    
+  
+}
+void PRIORITYPREM(void){
+  	printf("Priority scheduling preemptive\n processes waiting time:");
+	
+	struct node *temp=head;
+	struct node *tmp2=temp;
+    int counter=Nodes_count(temp);
+    int n=0,i=0 , j=0,prio[counter],burst[counter],arrival[counter],pc[counter], waiting[counter],tempburst=0,totalWaiting=0,wait=0,m=0,totalburst=0,count[counter],a=0;
+    
+    while(temp!=NULL){
+    Job_sort(tmp2);
+    temp=temp->after;
+		}
+		
+		 for(m=0;m<counter;m++){
+    	waiting[m]=0;
+    	count[m]=0;
+
+	}
+		
+		temp=tmp2;
+    for(n;n<counter;n++){
+    prio[n]=temp->priority;
+    burst[n]=temp->burst_Time;
+	arrival[n]=temp->arrival_Time;
+	pc[n]=temp->pc;
+	temp=temp->after;
+    		}
+    		
+    		for(n=0;n<counter;n++){
+    			totalburst=totalburst+burst[n];
+			}
+    		
+for(i;i<totalburst;i++){	
 
   for(j=0;j<counter;j++){
   	 
@@ -325,8 +505,12 @@ for(i;i<totalBurst;i++){
 		
 		for(m=0;m<counter;m++){
 			for(n=m+1;n<counter;n++){
-		if(burst[m] == burst[n] && arrival[m]>arrival[n]){
-	int a=burst[m];
+		if(prio[m] == prio[n] && arrival[m]>arrival[n]){
+	int a=prio[m];
+	prio[m]=prio[n];
+	prio[n]=a;
+	
+	a=burst[m];
 	burst[m]=burst[n];
 	burst[n]=a;
 	
@@ -350,82 +534,63 @@ for(i;i<totalBurst;i++){
 			burst[j]--;
 			count[j]++;
 			wait++; 
-		   j=counter-1;	}		
-	
-	
-		 }
+		   j=counter-1;	}
+		   	
+				   }
 	}
+
 for(j=0;j<counter;j++){
  	waiting[j]=waiting[j]-arrival[j];
+ 	
  	printf("\np%d = %d ms",pc[j],waiting[j]);
-	 total_Waiting=total_Waiting+waiting[j] ;
+ 	
+	 totalWaiting=totalWaiting+waiting[j] ;
 	 }
-double averagewaiting_Time=total_Waiting/(float)counter;
- printf("\n Average Waiting Time = %.2f ms",averagewaiting_Time);
- 
- simulation();
+double averagewaiting=totalWaiting/(float)counter;
+ printf("\n Average Waiting Time = %.2f  ms.",averagewaiting);
+
+sim();
 }
 
 
-void RR(void){
-	int quant;
-	
-	printf("RR quantum Time:");
-	scanf("%d",&quant);
+
+void PRIORITYNP()
+{
+
+	printf("priority\n processes waiting time:");
 	
 	struct node *temp=head;
 	struct node *tmp=temp;
     int counter=Nodes_count(temp);
-    int n=0,i=0,j=0,burst[counter],arrival[counter],pc[counter], waiting[counter],total_Waiting=0,m=0,wait=0,count[counter];
+    int n=0,i=0,j=0,burst[counter],arriv[counter],pc[counter],priority[counter], w=0,totalWaiting=0;
     
     while(temp!=NULL){
-    Arrival_sort(tmp);
-    temp=temp->next;
+    Priority_sort(tmp);
+    temp=temp->after;
 		}
-	
+		
 		temp=tmp;
     for(n;n<counter;n++){
     burst[n]=temp->burst_Time;
-	arrival[n]=temp->arrival_Time;
+	arriv[n]=temp->arrival_Time;
 	pc[n]=temp->pc;
-	temp=temp->next;
+	priority[n]=temp->priority;
+	temp=temp->after;
     		}
-
-    for(m=0;m<counter;m++){
-    	waiting[m]=0;
-    	count[m]=0;
-	}
-		
- for(i;i<counter;i++){
-
-for(j=0;j<counter;j++){
-
-	if(wait-arrival[j] >= 0 && burst[j] != 0){
-		
-		if(burst[j]<quant){
-        	waiting[j]=wait-(quant*count[j]);
-			wait=wait+burst[j];
-        	burst[j]=burst[j]-burst[j];
-				}
-		else{
-	waiting[j]=wait-(quant*count[j]);
-	burst[j]=burst[j]-quant;
-    wait=wait+quant;
-    count[j]++;
-    	}
+    		
+	 for(i;i<counter;i++){
+	for(j=0;j<counter;j++){
+	if(w-arriv[j] >= 0 && burst[j] != 0){
+		w=w-arriv[j];
+		totalWaiting=totalWaiting+w;
+		printf("\n p%d = %d ms",pc[j],w);
+		w=w+burst[j]+arriv[j];
+		burst[j]=0;
 	}
 }	
  }
- for(j=0;j<counter;j++){
- 	waiting[j]=waiting[j]-arrival[j];
- 	printf("\np%d = %d ms",pc[j],waiting[j]);
+double avgwait=totalWaiting/counter;
+ printf("\n Average Waiting Time = %.2f  ms.",avgwait);
 
-	 total_Waiting=total_Waiting+waiting[j] ;
-	 }
-double averagewaiting_Time=total_Waiting/(float)counter;
- printf("\n Average Waiting Time = %.2f ms",averagewaiting_Time);
-
-  simulation();
+  sim();     
 }
-
-
